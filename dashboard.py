@@ -97,7 +97,7 @@ if st.button("Get AI Insight"):
             """
             
             response = client.models.generate_content(
-                model="gemini-3.6-flash",
+                model="gemini-flash-latest",
                 contents=prompt
             )
             st.success("AI Insight:")
