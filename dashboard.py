@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
+import time
 from google import genai
+
 try:
     GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
 except:
@@ -78,6 +80,30 @@ def create_data_summary():
     """
     return summary
 
+def get_ai_response(prompt):
+    """Robust AI call with automatic retry and model fallback."""
+    models_to_try = [
+        "gemini-2.5-flash-lite",
+        "gemini-flash-lite-latest",
+        "gemini-flash-latest",
+        "gemini-2.5-flash",
+        "gemini-3.8-flash"
+    ]
+
+    for model_name in models_to_try:
+        for attempt in range(2):
+            try:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=prompt
+                )
+                return response.text
+            except Exception:
+                time.sleep(1.5 * (attempt + 1))
+                continue
+
+    return "⚠️ AI insights are temporarily unavailable due to high server demand. Please click the button again in a moment."
+
 user_question = st.text_input("Ask a question about your sales data (e.g., 'Which category should I focus on?')")
 
 if st.button("Get AI Insight"):
@@ -96,11 +122,8 @@ if st.button("Get AI Insight"):
             Provide a concise, helpful answer (max 150 words).
             """
             
-            response = client.models.generate_content(
-                model="gemini-flash-latest",
-                contents=prompt
-            )
+            result_text = get_ai_response(prompt)
             st.success("AI Insight:")
-            st.write(response.text)
+            st.write(result_text)
     else:
         st.warning("Please enter a question first!")
